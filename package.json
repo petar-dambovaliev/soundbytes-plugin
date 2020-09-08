@@ -1,0 +1,75 @@
+{
+    "name": "soundbytes-plugin",
+    "displayName": "Soundbytes plugin",
+    "description": "support for the musical programming language SoundBytes https://github.com/petar-dambovaliev/soundbytes",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.48.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:soundbytes"
+    ],
+    "main": "./extension/out/extension",
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -b",
+        "watch": "tsc -b -w",
+        "postinstall": "cd extension && npm install && npm install && cd .."
+    },
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Example configuration",
+            "properties": {
+                "languageServerExample.maxNumberOfProblems": {
+                    "scope": "resource",
+                    "type": "number",
+                    "default": 100,
+                    "description": "Controls the maximum number of problems produced by the server."
+                },
+                "languageServerExample.trace.server": {
+                    "scope": "window",
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces the communication between VS Code and the language server."
+                }
+            }
+        },
+        "languages": [
+            {
+                "id": "soundbytes",
+                "aliases": [
+                    "soundbytes",
+                    "sb"
+                ],
+                "extensions": [
+                    ".sb"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "soundbytes",
+                "scopeName": "source.sb",
+                "path": "./syntaxes/sb.tmLanguage.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "@types/mocha": "^8.0.3",
+        "@types/node": "^12.12.55",
+        "@typescript-eslint/parser": "^2.3.0",
+        "eslint": "^6.4.0",
+        "mocha": "^8.1.1",
+        "typescript": "^3.9.4"
+    }
+}

@@ -1,0 +1,101 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "soundbytes",
+	"patterns": [
+		{
+            "include": "#keywords"
+        },
+        {
+            "include": "#literal"
+        },
+        {
+            "include": "#expression"
+        }
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.sb",
+				"match": "\\b(let)\\b"
+			}]
+		},
+		"assignment-operator": {
+            "match": "=",
+            "name": "keyword.operator.assignment.sb"
+		},
+		"comment": {
+            "name": "comment.sb",
+            "patterns": [
+                {
+                    "include": "#comment-line"
+                }
+            ]
+		},
+		"comment-line": {
+            "match": "(//).*$\\n?",
+            "name": "comment.line.sb"
+		},
+		"literal": {
+            "name": "literal.sb",
+            "patterns": [
+                {
+                    "include": "#numeric-literal"
+                },            
+                {
+                    "include": "#reserved-literal"
+                }
+            ]
+		},
+		"reserved-literal": {
+            "match": "\\b\\s*(?i)(c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?\\b",
+            "name": "variable.language.reserved.sb"
+		},
+		"numeric-literal": {
+            "match": "\\s*(([0-9]+(\\.[0-9]+)?))\\b",
+            "name": "constant.numeric.sb"
+		},
+		"var-declaration": {
+            "begin": "(let)(\\s*)([_a-zA-Z_0-9]+)(\\s*)(=)",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.sb"
+                },
+                "3": {
+                    "name": "variable.name.sb"
+                }
+            },
+            "end": ";",
+            "endCaptures": {
+                "1": {
+                    "name": "meta.other.semicolon.sb"
+                }
+            },
+            "name": "meta.declaration.object.sb"
+		},
+		"manipulative-operator": {
+            "match": "\\*|/|\\-|\\+|%|\\^|plus|\\%",
+            "name": "keyword.operator.manipulative.sb"
+        },
+		"expression": {
+            "name": "meta.expression.sb",
+            "patterns": [                
+                {
+                    "include": "#comment"
+                },
+                {
+                    "include": "#literal"
+                },
+                {
+                    "include": "#manipulative-operator"
+                },
+                {
+                    "include": "#assignment-operator"
+                },                                                        
+                {
+                    "include": "#var-declaration"
+                }
+            ]
+        }
+	},
+	"scopeName": "source.sb"
+}
