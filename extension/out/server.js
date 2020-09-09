@@ -112,9 +112,11 @@ documents.onDidChangeContent(change => {
 async function validateTextDocument(textDocument) {
     let settings = await getDocumentSettings(textDocument.uri);
     let text = textDocument.getText();
-    let reserved_literals_pattern = /let\s*((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)\b/gm;
+    let reserved_literals_pattern = /let\s*((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)/gm;
     let m;
     let diagnostics = [];
+    //todo validate let statements
+    //validate function arguments
     while (m = reserved_literals_pattern.exec(text)) {
         let index = m.index + 4;
         let diagnostic = {
@@ -128,6 +130,41 @@ async function validateTextDocument(textDocument) {
         };
         diagnostics.push(diagnostic);
     }
+    // let all idents
+    let match_let = /let\s*([a-z][\w#]*)/gm;
+    let ml;
+    let match_ident = /([a-z][\w#]*)/gmi;
+    let l;
+    let vars = [];
+    vars['play'] = true;
+    vars['tempo'] = true;
+    let exprs = text.split(/\n/);
+    let char = 0;
+    for (const k in exprs) {
+        let ex = exprs[k].split(";");
+        for (const i in ex) {
+            if (ml = match_let.exec(ex[i])) {
+                char += ex[i].length + 1;
+                vars[ml[1]] = true;
+                continue;
+            }
+            while (l = match_ident.exec(ex[i])) {
+                if (vars[l[0]] == undefined) {
+                    let index = l.index + char;
+                    let diagnostic = {
+                        severity: vscode_languageserver_1.DiagnosticSeverity.Error,
+                        range: {
+                            start: textDocument.positionAt(index),
+                            end: textDocument.positionAt(index + l[0].length)
+                        },
+                        message: l[0].toString() + " is not defined",
+                    };
+                    diagnostics.push(diagnostic);
+                }
+            }
+            char += ex[i].length + 1;
+        }
+    }
     connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
 }
 connection.onCompletion((_textDocumentPosition) => {
@@ -136,19 +173,26 @@ connection.onCompletion((_textDocumentPosition) => {
             label: 'play();',
             insertText: 'play();',
             kind: vscode_languageserver_1.CompletionItemKind.Text,
-            data: 1,
             command: vscode_languageserver_1.Command.create("cursorMove", "cursorMove", { to: 'left', by: 'character', value: 2 }),
-            detail: 'builtin function for playing notes',
+            detail: 'play notes|tracks',
         },
         {
             label: 'tempo();',
             insertText: 'tempo();',
             kind: vscode_languageserver_1.CompletionItemKind.Text,
-            data: 2,
             command: vscode_languageserver_1.Command.create("cursorMove", "cursorMove", { to: 'left', by: 'character', value: 2 }),
-            detail: 'builtin function for setting the song tempo'
+            detail: 'set the song tempo'
+        },
+        {
+            label: 'let',
+            insertText: 'let ',
+            kind: vscode_languageserver_1.CompletionItemKind.Text,
+            detail: 'declare a variable'
         },
     ]);
+});
+connection.onCompletionResolve((item) => {
+    return item;
 });
 // Make the text document manager listen on the connection
 // for open, change and close text document events
