@@ -112,7 +112,7 @@ documents.onDidChangeContent(change => {
 async function validateTextDocument(textDocument) {
     let settings = await getDocumentSettings(textDocument.uri);
     let text = textDocument.getText();
-    let reserved_literals_pattern = /let\s*((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)/gm;
+    let reserved_literals_pattern = /let\s*((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)\b/gm;
     let m;
     let diagnostics = [];
     //todo validate let statements
@@ -138,11 +138,16 @@ async function validateTextDocument(textDocument) {
     let vars = [];
     vars['play'] = true;
     vars['tempo'] = true;
+    vars['track'] = true;
     let exprs = text.split(/\n/);
     let char = 0;
     for (const k in exprs) {
         let ex = exprs[k].split(";");
         for (const i in ex) {
+            if (ex[i][0] === "/" && ex[i][1] == "/") {
+                char += ex[i].length + 1;
+                continue;
+            }
             if (ml = match_let.exec(ex[i])) {
                 char += ex[i].length + 1;
                 vars[ml[1]] = true;
