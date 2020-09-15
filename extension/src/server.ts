@@ -101,7 +101,26 @@ function generateNoteCompletionItems() {
 		}	
 	}
 
+	noteItems.push(
+		{
+			label: 'x',
+			insertText: 'x',
+			kind: CompletionItemKind.Text,			
+			detail: "pause with inherited duration"
+		},
+	)
 
+	for (const d in durations) {
+		let str = 'x_' + durations[d];
+		noteItems.push(
+			{
+				label: str,
+				insertText: str,
+				kind: CompletionItemKind.Text,			
+				detail: "pause with duration " + durations[d]
+			},
+		)
+	}
 }
 
 connection.onInitialized(() => {
@@ -200,6 +219,10 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	let exprs = text.split(/\n/)
 	let char = 0;
 
+	for (const k in noteItems) {
+		vars[noteItems[k].label] = true;
+	}
+
 	for (const k in exprs) {
 		let ex = exprs[k].split(";");
 
@@ -210,6 +233,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			}
 			if (ml = match_let.exec(ex[i])) {			
 				char += ex[i].length + 1;
+				//connection.console.log(ml[1]);
 				vars[ml[1]] = true;
 				continue;
 			}
