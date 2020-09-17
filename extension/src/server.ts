@@ -186,7 +186,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	let settings = await getDocumentSettings(textDocument.uri);
 
 	let text = textDocument.getText();
-	let reserved_literals_pattern = /let\s*((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)\b/gm;
+	let reserved_literals_pattern = /let\s*(((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)|tempo|play|track)\b/gm;
 	let m: RegExpExecArray | null;
 	let diagnostics: Diagnostic[] = [];
 	//todo validate let statements
@@ -201,7 +201,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 				start: textDocument.positionAt(index),
 				end: textDocument.positionAt(index + m[1].length)
 			},
-			message: "cannot assign to a reserved note literal " + m[1].toString(),
+			message: "cannot assign to a reserved literal " + m[1].toString(),
 			source: 'soundbytes'
 		};
 		diagnostics.push(diagnostic);
