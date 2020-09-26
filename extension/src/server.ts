@@ -12,12 +12,14 @@ import {
 	TextDocumentSyncKind,
 	InitializeResult,
 	Command,
+	SignatureHelp,
+	SignatureInformation,
+	ParameterInformation
 } from 'vscode-languageserver';
 
 import {
 	TextDocument,
 } from 'vscode-languageserver-textdocument';
-import { FORMERR } from 'dns';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -51,8 +53,11 @@ connection.onInitialize((params: InitializeParams) => {
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			completionProvider: {
-				resolveProvider: true
-			}
+				resolveProvider: true,
+			},
+			signatureHelpProvider: {
+				triggerCharacters: ["vib", "track", "play", "tempo"]
+			},
 		}
 	};
 	if (hasWorkspaceFolderCapability) {
@@ -64,6 +69,16 @@ connection.onInitialize((params: InitializeParams) => {
 	}
 	return result;
 });
+
+connection.onSignatureHelp((a): SignatureHelp|undefined => {
+	return {
+	  signatures: [
+		SignatureInformation.create("play", "play", ParameterInformation.create("argument 1", "documentation 1")),
+	  ],
+	  activeParameter: 1,
+	  activeSignature: 1,
+	}
+  });
 
 
 let noteItems: CompletionItem[] = [];
@@ -186,7 +201,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	let settings = await getDocumentSettings(textDocument.uri);
 
 	let text = textDocument.getText();
-	let reserved_literals_pattern = /let\s*(((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)|tempo|play|track)\b/gm;
+	let reserved_literals_pattern = /let\s*(((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)|tempo|play|track|vib)\b/gm;
 	let m: RegExpExecArray | null;
 	let diagnostics: Diagnostic[] = [];
 	//todo validate let statements
@@ -216,6 +231,7 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 	vars['play'] = true;
 	vars['tempo'] = true;
 	vars['track'] = true;
+	vars['vib'] = true;
 	let exprs = text.split(/\n/)
 	let char = 0;
 
@@ -268,7 +284,7 @@ connection.onCompletion(
 					insertText: 'play();',
 					kind: CompletionItemKind.Text,
 					command: Command.create("cursorMove", "cursorMove", {to: 'left', by: 'character', value: 2}),
-					detail: 'play notes|tracks',									
+					detail: 'play notes|tracks',
 				},
 				{
 					label: 'tempo();',
@@ -278,11 +294,18 @@ connection.onCompletion(
 					detail: 'set the song tempo'											
 				},
 				{
+					label: 'vib',
+					insertText: 'vib();',
+					kind: CompletionItemKind.Text,
+					command: Command.create("cursorMove", "cursorMove", {to: 'left', by: 'character', value: 2}),
+					detail: 'add vibrato to notes'
+				},
+				{
 					label: 'let',
 					insertText: 'let ',
 					kind: CompletionItemKind.Text,
 					detail: 'declare a variable'								
-				},
+				},				
 			]
 		);
 	}

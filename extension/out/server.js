@@ -23,8 +23,11 @@ connection.onInitialize((params) => {
         capabilities: {
             textDocumentSync: vscode_languageserver_1.TextDocumentSyncKind.Incremental,
             completionProvider: {
-                resolveProvider: true
-            }
+                resolveProvider: true,
+            },
+            signatureHelpProvider: {
+                triggerCharacters: ["vib", "track", "play", "tempo"]
+            },
         }
     };
     if (hasWorkspaceFolderCapability) {
@@ -35,6 +38,15 @@ connection.onInitialize((params) => {
         };
     }
     return result;
+});
+connection.onSignatureHelp((a, b, c, d) => {
+    return {
+        signatures: [
+            vscode_languageserver_1.SignatureInformation.create("play", "play", vscode_languageserver_1.ParameterInformation.create("argument 1", "documentation 1")),
+        ],
+        activeParameter: 1,
+        activeSignature: 1,
+    };
 });
 let noteItems = [];
 function generateNoteCompletionItems() {
@@ -61,6 +73,21 @@ function generateNoteCompletionItems() {
                 });
             }
         }
+    }
+    noteItems.push({
+        label: 'x',
+        insertText: 'x',
+        kind: vscode_languageserver_1.CompletionItemKind.Text,
+        detail: "pause with inherited duration"
+    });
+    for (const d in durations) {
+        let str = 'x_' + durations[d];
+        noteItems.push({
+            label: str,
+            insertText: str,
+            kind: vscode_languageserver_1.CompletionItemKind.Text,
+            detail: "pause with duration " + durations[d]
+        });
     }
 }
 connection.onInitialized(() => {
@@ -112,7 +139,7 @@ documents.onDidChangeContent(change => {
 async function validateTextDocument(textDocument) {
     let settings = await getDocumentSettings(textDocument.uri);
     let text = textDocument.getText();
-    let reserved_literals_pattern = /let\s*((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)\b/gm;
+    let reserved_literals_pattern = /let\s*(((c|d|e|f|g|a|b)(#)?(_[1-7]_(1|4|8|16|32))?)|tempo|play|track|vib)\b/gm;
     let m;
     let diagnostics = [];
     //todo validate let statements
@@ -125,7 +152,7 @@ async function validateTextDocument(textDocument) {
                 start: textDocument.positionAt(index),
                 end: textDocument.positionAt(index + m[1].length)
             },
-            message: "cannot assign to a reserved note literal " + m[1].toString(),
+            message: "cannot assign to a reserved literal " + m[1].toString(),
             source: 'soundbytes'
         };
         diagnostics.push(diagnostic);
@@ -139,8 +166,12 @@ async function validateTextDocument(textDocument) {
     vars['play'] = true;
     vars['tempo'] = true;
     vars['track'] = true;
+    vars['vib'] = true;
     let exprs = text.split(/\n/);
     let char = 0;
+    for (const k in noteItems) {
+        vars[noteItems[k].label] = true;
+    }
     for (const k in exprs) {
         let ex = exprs[k].split(";");
         for (const i in ex) {
@@ -150,6 +181,7 @@ async function validateTextDocument(textDocument) {
             }
             if (ml = match_let.exec(ex[i])) {
                 char += ex[i].length + 1;
+                //connection.console.log(ml[1]);
                 vars[ml[1]] = true;
                 continue;
             }
@@ -187,6 +219,13 @@ connection.onCompletion((_textDocumentPosition) => {
             kind: vscode_languageserver_1.CompletionItemKind.Text,
             command: vscode_languageserver_1.Command.create("cursorMove", "cursorMove", { to: 'left', by: 'character', value: 2 }),
             detail: 'set the song tempo'
+        },
+        {
+            label: 'vib',
+            insertText: 'vib();',
+            kind: vscode_languageserver_1.CompletionItemKind.Text,
+            command: vscode_languageserver_1.Command.create("cursorMove", "cursorMove", { to: 'left', by: 'character', value: 2 }),
+            detail: 'add vibrato to notes'
         },
         {
             label: 'let',
